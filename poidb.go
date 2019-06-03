@@ -23,7 +23,7 @@ type DB struct {
 	file      *os.File          // the underlying file
 	buf       []byte            // a buffer to write to
 	keys      *btree.BTree      // a tree of all item ordered by key
-	index     d2.BoxTree        // poi index
+	index     *d2.BoxTree        // poi index
 	flushes   int               // a count of the number of disk flushes
 	closed    bool              // set when the database has been closed
 	config    Config            // the database configuration
@@ -62,7 +62,7 @@ func Open(path string) (*DB, error) {
 	db := &DB{}
 	// initialize trees and indexes
 	db.keys = btree.New(btreeDegrees, nil)
-	db.index = d2.BoxTree{}
+	db.index = &d2.BoxTree{}
 	db.commitItems = make(map[string]*dbItem)
 
 	// initialize default configuration
@@ -280,7 +280,7 @@ func (db *DB) readLoad(rd io.Reader, modTime time.Time) error {
 		} else if (parts[0][0] == 'f' || parts[0][1] == 'F') &&
 			strings.ToLower(parts[0]) == "flushdb" {
 			db.keys = btree.New(btreeDegrees, nil)
-			db.index = d2.BoxTree{}
+			db.index = &d2.BoxTree{}
 		} else {
 			return ErrInvalid
 		}

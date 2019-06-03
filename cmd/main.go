@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"fmt"
@@ -64,7 +64,7 @@ func main() {
 		return
 	}
 
-	max := 40000000
+	max := 80000000
 	i := db.Count()
 	rand.Seed(time.Now().UnixNano())
 
@@ -100,6 +100,7 @@ func main() {
 		fmt.Printf("near items %d\n", len(items))
 	}
 	fmt.Printf("query %d times in %s\n", max, time.Since(t2))
+	select {}
 }
 
 func Nearby(db *poidb.DB, lng, lat float64, meters float64, limit int) (items []Item) {
