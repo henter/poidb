@@ -569,7 +569,7 @@ func (db *DB) Set(key string, lng, lat float64) (prevKey string, replaced bool, 
 	defer db.mu.Unlock()
 
 	if db == nil {
-		return "", false, ErrTxClosed
+		return "", false, ErrInvalid
 	}
 	item := &dbItem{key: key, lng: lng, lat: lat}
 	// Insert the item into the keys tree.
@@ -584,19 +584,6 @@ func (db *DB) Set(key string, lng, lat float64) (prevKey string, replaced bool, 
 		db.commitItems[key] = item
 	}
 
-	if _, err = db.file.Write(db.buf); err != nil {
-		//TODO
-	}
-	// Increment the number of flushes. The background syncing uses this.
-	db.flushes++
-
-	if db.config.SyncPolicy == Always {
-		err = db.file.Sync()
-		if err != nil {
-			fmt.Printf("file sync error %s\n", err)
-		}
-	}
-
 	err = db.Commit()
 	return prevKey, replaced, err
 }
@@ -606,7 +593,7 @@ func (db *DB) Set(key string, lng, lat float64) (prevKey string, replaced bool, 
 // from a read-only transaction.
 func (db *DB) Commit() error {
 	if db == nil {
-		return ErrTxClosed
+		return ErrInvalid
 	}
 	var err error
 	if db.persist && len(db.commitItems) > 0 {
@@ -626,7 +613,7 @@ func (db *DB) Commit() error {
 			//TODO
 		}
 		if db.config.SyncPolicy == Always {
-			_ = db.file.Sync()
+			err = db.file.Sync()
 		}
 		// Increment the number of flushes. The background syncing uses this.
 		db.flushes++

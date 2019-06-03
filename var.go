@@ -3,14 +3,6 @@ package poidb
 import "errors"
 
 var (
-	// ErrTxNotWritable is returned when performing a write operation on a
-	// read-only transaction.
-	ErrTxNotWritable = errors.New("tx not writable")
-
-	// ErrTxClosed is returned when committing or rolling back a transaction
-	// that has already been committed or rolled back.
-	ErrTxClosed = errors.New("tx closed")
-
 	// ErrNotFound is returned when an item or index is not in the database.
 	ErrNotFound = errors.New("not found")
 
