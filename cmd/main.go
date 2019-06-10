@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"github.com/henter/poidb"
 	"github.com/rs/xid"
-	"github.com/tidwall/geojson"
-	"github.com/tidwall/geojson/geo"
-	"github.com/tidwall/geojson/geometry"
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
@@ -15,7 +12,6 @@ import (
 	"os/signal"
 	"runtime"
 	"runtime/debug"
-	"sort"
 	"syscall"
 	"time"
 )
@@ -27,11 +23,6 @@ var (
 	gogc int
 	gcs int
 )
-
-type Item struct {
-	Id         string
-	X, Y, Dist float64
-}
 
 func main() {
 	flag.IntVar(&max, "max", 1000000, "max poi to test")
@@ -120,7 +111,7 @@ func main() {
 
 	//query bench
 	max = 1000000
-	var items []Item
+	var items []poidb.Item
 	var c int
 	for {
 		i = 0
@@ -131,7 +122,7 @@ func main() {
 			lng = 90.123 + float64(rand.Intn(40)) + rand.Float64()
 			lat = 18.2423 + float64(rand.Intn(30)) + rand.Float64()
 
-			items = Nearby(db, lng, lat, 500, 10)
+			items = db.NearbyWithDist(lng, lat, 500, 10)
 			//fmt.Printf("near items %d\n", len(items))
 			c += len(items)
 		}
@@ -160,28 +151,4 @@ func watchOutOfMemory() {
 		//	log.Info("watch oom gc", zap.Any("healAlloc", mem.HeapAlloc))
 		//}
 	}
-}
-
-func Nearby(db *poidb.DB, lng, lat float64, meters float64, limit int) (items []Item) {
-	p := geometry.Point{lng, lat}
-	target := geojson.NewCircle(p, meters, 64)
-
-	maxDist := target.Haversine()
-	db.Nearby(target, nil, nil, func(id string, lng, lat float64) bool {
-		dist := target.HaversineTo(geometry.Point{lng, lat})
-		if maxDist > 0 && dist > maxDist {
-			return false
-		}
-		items = append(items, Item{
-			Id:   id,
-			X:    lng,
-			Y:    lat,
-			Dist: geo.DistanceFromHaversine(dist),
-		})
-		return len(items) < limit
-	})
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].Dist < items[j].Dist
-	})
-	return
 }

@@ -8,9 +8,11 @@ import (
 	"github.com/tidwall/btree"
 	"github.com/tidwall/geojson"
 	"github.com/tidwall/geojson/geo"
+	"github.com/tidwall/geojson/geometry"
 	"io"
 	"os"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -696,4 +698,33 @@ func nextStep(step uint64, cursor Cursor, deadline *deadline.Deadline) {
 	if cursor != nil {
 		cursor.Step(1)
 	}
+}
+
+type Item struct {
+	Id         string
+	X, Y, Dist float64
+}
+
+func (db *DB) NearbyWithDist(lng, lat float64, meters float64, limit int) (items []Item) {
+	p := geometry.Point{lng, lat}
+	target := geojson.NewCircle(p, meters, 64)
+
+	maxDist := target.Haversine()
+	db.Nearby(target, nil, nil, func(id string, lng, lat float64) bool {
+		dist := target.HaversineTo(geometry.Point{lng, lat})
+		if maxDist > 0 && dist > maxDist {
+			return false
+		}
+		items = append(items, Item{
+			Id:   id,
+			X:    lng,
+			Y:    lat,
+			Dist: geo.DistanceFromHaversine(dist),
+		})
+		return len(items) < limit
+	})
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].Dist < items[j].Dist
+	})
+	return
 }
