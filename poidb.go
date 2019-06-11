@@ -336,7 +336,7 @@ func (db *DB) backgroundManager() {
 			func() {
 				db.mu.Lock()
 				defer db.mu.Unlock()
-				fmt.Printf("file sync persist %d policy  %d flushed %d != %d\n", db.persist, db.config.SyncPolicy, flushes, db.flushes)
+				//fmt.Printf("file sync persist %v policy  %d flushed %d != %d\n", db.persist, db.config.SyncPolicy, flushes, db.flushes)
 				if flushes != db.flushes {
 					err = db.file.Sync()
 					if err != nil {
